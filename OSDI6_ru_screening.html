@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSDI-6 — анкета симптомов сухого глаза</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#1f2937;background:#f5f7fa}
+*{box-sizing:border-box}
+body{margin:0;padding:20px 14px}
+main{max-width:760px;margin:0 auto;background:white;border-radius:18px;padding:24px;box-shadow:0 5px 24px #182b4412}
+h1{font-size:1.55rem;margin:0 0 8px}
+.lead{color:#526071;line-height:1.5;margin:0 0 20px}
+.note{background:#f0f5fa;border-left:4px solid #6b8eae;padding:12px 14px;border-radius:8px;font-size:.92rem;line-height:1.45;margin:18px 0}
+fieldset{border:0;border-top:1px solid #e5eaf0;padding:18px 0;margin:0}
+legend{font-weight:650;padding:0 0 10px;line-height:1.45}
+.prompt{font-size:.88rem;color:#5b6675;margin:0 0 10px}
+.options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+label.opt{border:1px solid #d8dee7;border-radius:10px;padding:10px 5px;text-align:center;cursor:pointer;font-size:.85rem;line-height:1.25}
+label.opt:has(input:checked){border-color:#315f86;background:#edf4fa}
+.opt input{display:block;margin:0 auto 7px;accent-color:#315f86}
+.small{font-size:.78rem;color:#64748b;display:block;margin-top:3px}
+button{border:0;border-radius:10px;padding:13px 18px;background:#244f73;color:white;font-weight:650;font-size:1rem;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+button.secondary{background:#e8edf2;color:#243447}
+#result{display:none;margin-top:22px;border:1px solid #dce5ed;border-radius:14px;padding:18px}
+.score{font-size:2rem;font-weight:750;margin:4px 0}
+.result-title{font-weight:700}
+footer{font-size:.8rem;color:#6b7280;margin-top:22px;line-height:1.45}
+@media(max-width:520px){main{padding:18px 14px}.options{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}label.opt{font-size:.75rem;padding:9px 2px}.small{font-size:.7rem}}
+@media print{body{background:white;padding:0}main{box-shadow:none;max-width:none}button{display:none!important}#result{display:block!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>Опросник OSDI-6</h1>
+<p class="lead">Оценка симптомов, связанных с сухостью глаз. Пожалуйста, ответьте на все 6 вопросов, ориентируясь на обычный день в течение последнего месяца.</p>
+<div class="note"><b>Как отвечать:</b> выберите один вариант в каждой строке. Здесь «постоянно» означает, что это происходило постоянно или почти постоянно, «никогда» — ни разу.</div>
+
+<form id="survey">
+<fieldset>
+<legend>1. Как часто ваши глаза были чувствительны к свету?</legend>
+<div class="prompt">Симптомы и зрительный дискомфорт</div>
+<div class="options" data-q="q1"></div>
+</fieldset>
+<fieldset>
+<legend>2. Как часто зрение затуманивалось между морганиями?</legend>
+<div class="prompt">Учитывайте вашу обычную коррекцию зрения, если вы ею пользуетесь.</div>
+<div class="options" data-q="q2"></div>
+</fieldset>
+<fieldset>
+<legend>3. Как часто состояние глаз ограничивало вас при вождении автомобиля или поездке в автомобиле в тёмное время суток?</legend>
+<div class="prompt">Зрительная деятельность</div>
+<div class="options" data-q="q3"></div>
+</fieldset>
+<fieldset>
+<legend>4. Как часто состояние глаз ограничивало вас при просмотре телевизора или выполнении подобной зрительной задачи?</legend>
+<div class="prompt">Зрительная деятельность</div>
+<div class="options" data-q="q4"></div>
+</fieldset>
+<fieldset>
+<legend>5. Как часто ваши глаза испытывали дискомфорт в ветреную погоду?</legend>
+<div class="prompt">Влияние окружающей среды</div>
+<div class="options" data-q="q5"></div>
+</fieldset>
+<fieldset>
+<legend>6. Как часто ваши глаза испытывали дискомфорт в помещениях или местах с низкой влажностью воздуха?</legend>
+<div class="prompt">Влияние окружающей среды</div>
+<div class="options" data-q="q6"></div>
+</fieldset>
+<button id="calc" type="button" disabled>Рассчитать результат</button>
+</form>
+
+<section id="result" aria-live="polite">
+<div class="result-title">Результат скрининга OSDI-6</div>
+<div class="score" id="score"></div>
+<div id="interpretation"></div>
+<div class="note" id="clinicalnote"></div>
+<div class="actions">
+<button type="button" onclick="window.print()">Распечатать результат</button>
+<button type="button" class="secondary" onclick="copyResult()">Скопировать результат</button>
+<button type="button" class="secondary" onclick="resetForm()">Заполнить заново</button>
+</div>
+</section>
+
+<footer>
+Рабочая русскоязычная адаптация формулировок OSDI-6 для предварительного использования. Перед внедрением в клиническую практику следует проверить перевод и права/условия использования инструмента. Эта форма не является самостоятельным диагнозом и не передаёт ответы на сервер: расчёт выполняется только в браузере на устройстве пациента.
+<br><br>
+Основа алгоритма: TFOS DEWS III Diagnostic Methodology (2025). В DEWS III положительным скрининговым результатом считается сумма ≥4 баллов; для диагностики сухого глаза требуется также объективный признак нарушения гомеостаза слёзной плёнки/глазной поверхности.
+</footer>
+</main>
+<script>
+const choices = [
+  ["Постоянно",4],["Преимущественно",3],["Часто",2],["Иногда",1],["Никогда",0]
+];
+document.querySelectorAll(".options").forEach(group=>{
+  const q=group.dataset.q;
+  choices.forEach(([label,value])=>{
+    const id=q+"_"+value;
+    const el=document.createElement("label");
+    el.className="opt";
+    el.innerHTML=`<input type="radio" name="${q}" value="${value}" aria-label="${label}"><span>${label}</span><span class="small">${value} балл${value===1?"":value>=2&&value<=4?"а":"ов"}</span>`;
+    group.appendChild(el);
+  });
+});
+const form=document.getElementById("survey"), calc=document.getElementById("calc");
+form.addEventListener("change",()=>{
+  calc.disabled=!Array.from({length:6},(_,i)=>form.querySelector(`input[name="q${i+1}"]:checked`)).every(Boolean);
+});
+function calculate(){
+  const vals=Array.from({length:6},(_,i)=>Number(form.querySelector(`input[name="q${i+1}"]:checked`).value));
+  const sum=vals.reduce((a,b)=>a+b,0);
+  let level,meaning;
+  if(sum<=3){level="0–3 балла: скрининг отрицательный";meaning="Симптомы сухого глаза по этому опроснику выражены недостаточно для положительного скрининга."}
+  else if(sum<=8){level="4–8 баллов: положительный скрининг";meaning="Результат соответствует симптомам сухого глаза лёгкой/умеренной выраженности по диапазонам, приведённым в DEWS III."}
+  else{level="9–24 балла: положительный скрининг";meaning="Результат соответствует выраженным симптомам по диапазонам, приведённым в DEWS III."}
+  document.getElementById("score").textContent=sum+" / 24";
+  document.getElementById("interpretation").innerHTML="<b>"+level+"</b><br>"+meaning;
+  document.getElementById("clinicalnote").textContent="Важно для врача: OSDI-6 оценивает симптомы, но не подтверждает диагноз самостоятельно. При результате ≥4 необходимо сопоставить жалобы с объективными признаками (например, NIBUT, осмолярность и/или окрашивание глазной поверхности) и исключить другие причины симптомов.";
+  document.getElementById("result").style.display="block";
+  document.getElementById("result").scrollIntoView({behavior:"smooth",block:"start"});
+  window.osdiResult={score:sum,answers:vals,level};
+}
+calc.addEventListener("click",calculate);
+function copyResult(){
+  if(!window.osdiResult)return;
+  const r=window.osdiResult;
+  const txt=`OSDI-6: ${r.score}/24 балла\nОтветы по пунктам: ${r.answers.join(", ")}\n${r.level}\nСкрининг симптомов; не является самостоятельным диагнозом.`;
+  navigator.clipboard?.writeText(txt).then(()=>alert("Результат скопирован.")).catch(()=>alert(txt));
+}
+function resetForm(){form.reset();calc.disabled=true;document.getElementById("result").style.display="none";window.scrollTo({top:0,behavior:"smooth"});}
+</script>
+</body>
+</html>
